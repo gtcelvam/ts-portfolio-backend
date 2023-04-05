@@ -39,7 +39,17 @@ ProfileRoute.delete("/profile/:id", async (req, res) => {
 ProfileRoute.get("/profile", async (req, res) => {
   try {
     let profileData = await profileSchema.find();
-    res.status(200).json(profileData);
+    const bufferData = profileData[0].image.data;
+    const buffer = Buffer.from(bufferData);
+    const base64String = buffer.toString('base64');
+    const contentType = profileData[0].image.contentType;
+    const url = `data:${contentType};base64,${base64String}`;
+    const profileInfo = {
+      name: profileData[0].name,
+      role: profileData[0].role,
+      url : url
+    }
+    res.status(200).json(profileInfo);
   } catch (error) {
     res.status(404).json({ message: error });
   }
