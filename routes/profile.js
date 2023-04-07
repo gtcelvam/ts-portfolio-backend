@@ -1,22 +1,13 @@
-const Mongoose = require("mongoose");
 const multer = require("multer");
 const profileSchema = require("../modals/profileSchema");
 const ProfileSchema = require("../modals/profileSchema");
+const { setProfileData, handleProfileData } = require("../utils/helpers");
 const ProfileRoute = require("express").Router();
 const Upload = multer();
 
+//Add
 ProfileRoute.post("/profile", Upload.single("image"), async (req, res) => {
-  const uniqueId = new Mongoose.Types.ObjectId();
-  const extension = req.file.mimetype.split("/")[1];
-  const profileData = {
-    name: req.body.name,
-    role: req.body.role,
-    image: {
-      name: uniqueId,
-      data: req.file.buffer,
-      contentType: req.file.mimetype,
-    },
-  };
+  const profileData = setProfileData(req);
   const profileSchema = new ProfileSchema(profileData);
   try {
     const data = await profileSchema.save();
@@ -26,6 +17,48 @@ ProfileRoute.post("/profile", Upload.single("image"), async (req, res) => {
   }
 });
 
+//Get
+ProfileRoute.get("/profile", async (req, res) => {
+  try {
+    let profileData = await profileSchema.find();
+    const profileInfo = handleProfileData(profileData);
+    res.status(200).json(profileInfo);
+  } catch (error) {
+    res.status(404).json({ message: error });
+  }
+});
+
+//Edit
+ProfileRoute.patch("/profile/:id", Upload.single("image"), async (req, res) => {
+  let id = req.params.id;
+  let getProduct = await profileSchema.findById(id);
+  if (getProduct) {
+    try {
+      let fileData;
+      let sanitizedData;
+      if (req.file) {
+        delete getProduct._doc.image;
+        fileData = { ...getProduct._doc, ...req.body, ...req.file };
+        sanitizedData = setProfileData(fileData);
+        let updatedData = await ProfileSchema.replaceOne(
+          { _id: id },
+          sanitizedData
+        );
+        res.status(200).json(updatedData);
+      } else {
+        fileData = { ...getProduct._doc, ...req.body };
+        let updatedData = await ProfileSchema.replaceOne({ _id: id }, fileData);
+        res.status(200).json(updatedData);
+      }
+    } catch (error) {
+      res.status(404).json({ message: error });
+    }
+  } else {
+    res.status(404).json({ message: "No product found with this id!" });
+  }
+});
+
+//Delete
 ProfileRoute.delete("/profile/:id", async (req, res) => {
   let id = req.params.id;
   try {
@@ -34,26 +67,6 @@ ProfileRoute.delete("/profile/:id", async (req, res) => {
   } catch (error) {
     res.status(404).json({ message: error });
   }
-});
-
-ProfileRoute.get("/profile", async (req, res) => {
-  try {
-    let profileData = await profileSchema.find();
-    const bufferData = profileData[0].image.data;
-    const buffer = Buffer.from(bufferData);
-    const base64String = buffer.toString('base64');
-    const contentType = profileData[0].image.contentType;
-    const url = `data:${contentType};base64,${base64String}`;
-    const profileInfo = {
-      name: profileData[0].name,
-      role: profileData[0].role,
-      url : url
-    }
-    res.status(200).json(profileInfo);
-  } catch (error) {
-    res.status(404).json({ message: error });
-  }
-
 });
 
 module.exports = ProfileRoute;
