@@ -1,8 +1,8 @@
+
 const { default: mongoose } = require('mongoose');
-const Mongoose = require('mongoose');
 
 
-let Schema = Mongoose.Schema;
+let Schema = mongoose.Schema;
 let ObjectId = Schema.Types.ObjectId;
 const ProfileSchema = new Schema({
     name: String,

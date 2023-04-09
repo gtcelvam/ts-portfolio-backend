@@ -2,7 +2,10 @@ let express = require("express");
 require("dotenv").config();
 const Mongoose = require("mongoose");
 const cors = require("cors");
+const { graphqlHTTP } = require('express-graphql');
+const { buildSchema } = require('graphql');
 const ProfileRoute = require("./routes/profile");
+const Schema = require('./schema');
 const app = express();
 
 //Cors Policy
@@ -33,6 +36,29 @@ const handleDBConnection = async () => {
 app.get("/", (req, res) => {
   res.status(200).json({ message: "Working fine" });
 });
+
+let Events = [];
+
+app.use('/graphql', graphqlHTTP({
+  schema: Schema,
+  // rootValue: {
+  //   event: () => {
+  //     return Events;
+  //   },
+  //   createEvent: (args) => {
+  //     let data = args.event;
+  //     let eventValue = {
+  //       _id: Math.random().toString(),
+  //       name: data.name,
+  //       role: data.role,
+  //       date: new Date().toISOString()
+  //     }
+  //     Events.push(eventValue);
+  //     return eventValue
+  //   }
+  // },
+  graphiql:true
+}))
 
 app.use("/api", ProfileRoute);
 
