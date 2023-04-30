@@ -16,10 +16,7 @@ MailRoute.post("/mail", (req, res) => {
     from: process.env.NODE_MAIL_ID,
     to: process.env.NODE_SENDER_ID,
     subject: "Portfolio Message",
-    text: `
-      Subject : ${req.body.subject},
-      Message : ${req.body.message}
-    `,
+    text: req.body.text,
   };
   sender.sendMail(composeMail, (err, data) => {
     if (err) res.status(404).json({ message: err });
